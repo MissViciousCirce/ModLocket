@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
     [string]$SourceDirectory = $PSScriptRoot,
     [string]$OutputDirectory,
@@ -86,10 +86,20 @@ try {
     }finally{$zip.Dispose();$memory.Dispose()}
     $main=Join-Path $runtime 'ModLocket.ps1'
     # An encoded command handles spaces and apostrophes in Windows user paths.
-    $command="& '"+$main.Replace("'","''")+"'"
+    $quotedMain="'"+$main.Replace("'","''")+"'"
+    $command="try { & $quotedMain; exit 0 } catch { Add-Type -AssemblyName System.Windows.Forms; [void][Windows.Forms.MessageBox]::Show([string]`$_,'ModLocket startup error'); exit 1 }"
     $encoded=[Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($command))
     $shell=Join-Path $env:SystemRoot 'System32/WindowsPowerShell/v1.0/powershell.exe'
-    $child=Start-Process -FilePath $shell -ArgumentList @('-NoLogo','-NoProfile','-STA','-ExecutionPolicy','Bypass','-EncodedCommand',$encoded) -WindowStyle Hidden -PassThru
+    # Suppress the console only; do not apply Hidden to GUI startup windows.
+    $startInfo=New-Object Diagnostics.ProcessStartInfo
+    $startInfo.FileName=$shell
+    $startInfo.Arguments='-NoLogo -NoProfile -NonInteractive -STA -ExecutionPolicy Bypass -EncodedCommand '+$encoded
+    $startInfo.WorkingDirectory=$runtime
+    $startInfo.UseShellExecute=$false
+    $startInfo.CreateNoWindow=$true
+    $startInfo.RedirectStandardInput=$true
+    $child=[Diagnostics.Process]::Start($startInfo)
+    $child.StandardInput.Close()
     $child.WaitForExit()
     if($child.ExitCode -ne 0){throw "ModLocket exited with code $($child.ExitCode). Try Start-With-Log.cmd in the source folder for details."}
 }catch{
