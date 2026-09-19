@@ -1,0 +1,18 @@
+MODLOCKET FOR ASA - FREEWARE LICENSE
+===================================
+Copyright (c) 2026 ViciousCirce. All rights reserved.
+
+Permission is granted to download and use unmodified copies of ModLocket for ASA
+for personal, non-commercial purposes at no charge.
+
+You may not sell, relicense, impersonate the author of, or redistribute a
+modified or repackaged copy without the copyright holder's written permission.
+Linking to the official download page is allowed and encouraged.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND. TO THE MAXIMUM
+EXTENT PERMITTED BY LAW, THE AUTHOR IS NOT LIABLE FOR DATA LOSS, LOST PLAYTIME,
+LOST MOD CONFIGURATION, OR OTHER DAMAGES ARISING FROM USE OF THE SOFTWARE.
+
+ARK: Survival Ascended and related names are property of their respective
+owners. ModLocket is an independent community utility and is not affiliated with
+or endorsed by Studio Wildcard, Snail Games, Valve, or CurseForge.

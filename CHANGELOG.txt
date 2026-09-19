@@ -1,0 +1,124 @@
+4.0.0-online.4 - Local and optional CurseForge comparison (private preview)
+- Replace historical-scan button action with saved/local/published ID comparison.
+- Optional fixed-endpoint CurseForge API transport with encrypted Windows key.
+- Unknown/omitted/failed metadata never counts as a current or verified mod.
+- Save small immutable mod lists without full payload copies; staged publication.
+- Preserve full backup, repair, worker, launch safeguards and approved artwork.
+- 199 portable tests pass; native Windows and real API integration pending.
+- No download/install, deduplicated backup, or list-only protected launch added.
+
+4.0.0-ui.3 - Restore button alignment and ready badge (private)
+- Restore READY, SURVIVOR with the mint palette for the idle app badge.
+- Center the Restore Missing Files caption horizontally and vertically, with
+  equal-width left-arrow and right-info columns. Shorten only its subtitle to
+  Check, restore + launch; the action and full help text stay the same.
+- Make the info control circular and paint the exact underlying action gradient.
+  Focus uses a circular cue. Hover help no longer opens on focus changes.
+- Keep the approved original logo unchanged, including its hair highlights.
+- Retain status padding, footer snakes, and the unchanged safety.13 engine.
+
+4.0.0-ui.2 - Interface spacing, help and footer fixes (private)
+- Inset the rectangular status text control inside its rounded frame so the
+  first character and upper-left text are no longer clipped by the corner.
+- Draw the info circle and i explicitly and bring its control above the action
+  artwork. Reserve space above the Restore Missing Files caption.
+- Show timing tooltip only over the icon; focus changes do not open it. Hide
+  on mouse leave, deactivation or a running action. Clicking/keyboard activation
+  still opens the dark help dialog.
+- Restore inward-facing lavender snakes and divider lines beside the footer.
+- Engine, backup format, worker and original logo bytes remain unchanged.
+
+4.0.0-ui.1 - First working visual iteration (private)
+- Apply moonlit design and the approved original logo PNG.
+- Rename combined backup action BACKUP and deep recovery RESTORE MISSING FILES.
+- Add focusable timing info tooltip beside recovery, and measured stage bar.
+- Theme backup management, review, cancellation and confirmation dialogs dark.
+- Preserve the Windows-passed safety.13 engine/worker files byte-for-byte.
+- Include optional Windows interface check and startup logging launchers.
+
+4.0.0-safety.13 - Backup review timestamp fix (private build)
+- Fix false stale-review rejection when only directory timestamps change.
+- Retain directory layout, file sizes/times, metadata checksums and pointer checks.
+- Reproduce the reported failure deterministically by changing folder timestamps
+  between review and interrupted-first-copy cleanup.
+- Add five guards for added/renamed empty folders, file time/length changes and
+  same-size/time metadata changes. No changes to quick launch or saved backups.
+
+4.0.0-safety.12 - Windows test correction (private build)
+- Fix test-harness partial-copy injection when native Robocopy mode is enabled.
+- Assert one copied payload and no completed manifest/current selection before
+  testing interrupted-first-backup discard/retry.
+- Force that mode flag locally to prevent this platform-specific test regression.
+- No production behavior changes beyond the displayed build version.
+
+4.0.0-safety.11 - Backup management (private test build)
+- Combine first-time and subsequent saves into Create/Update Backup.
+- Add read-only saved-copy list, space usage and current-copy protection.
+- Add explicit old-copy deletion and verified backup selection.
+- Mark interrupted copies; preserve repair-temp bytes in Recovery on cleanup.
+- Add safety coverage for stale selections, links, missing pointers and cleanup.
+- Quick launch keeps its existing fast checks; no automatic deletion or updates.
+
+4.0.0-safety.10 - BACKUP CHANGE REVIEW
+- Review named additions, removals and version changes before saving.
+- Require explicit acknowledgment for removals; refuse stale reviewed state.
+- Show backup space estimate and fail low space before lengthy hashing.
+- Recheck the mod index immediately before a staged repair is installed.
+- Thirteen new portable regression cases; 148 local passes.
+
+4.0.0-safety.9 - FILE-BASED WORKER START
+- Replace encoded-command host invocation with a gated -File entry script.
+- Add Test-Status-Output.cmd: small output check without ARK access.
+
+4.0.0-safety.8 - STATUS OUTPUT FIX
+- Request plain-text PowerShell worker output; prevents serialized progress XML from appearing as errors.
+- Preserve actual standard-error output, progress markers, and worker exit codes.
+- Add native Windows output transport regression.
+
+4.0.0-safety.8 | close anyway and owned worker cancellation | 2026-09-19
+- Add Keep working / Close anyway dialog and responsive stopping status.
+- Replace background jobs with a gated worker in a Windows kill-on-close job.
+- Stop only the operation and its descendants; no process-name matching.
+- Move GUI Steam handoff outside the worker job; cancelled work cannot launch.
+- Reject approvals completed before a close dialog was dismissed.
+- Preserve prior snapshots; incomplete backup and repair staging stays for review.
+- Keep stage progress, quick checks, existing snapshots and deep checks.
+- Add portable handoff tests and 8 Windows-only hard-interruption tests.
+- This remains a private test build; native Windows validation is required.
+
+4.0.0-safety.6 | progress and filesystem-check performance | 2026-09-19
+- Preserve every ancestor/reparse check but use direct .NET attribute queries
+  instead of repeated PowerShell Test-Path/Get-Item/Split-Path operations.
+- No validation cache or skipped quick/deep checks introduced.
+- Add live current-stage percentages, elapsed time and last-progress age.
+- Use indeterminate stage text when no trustworthy total is available.
+- Add per-stage quick-launch timings; target <=30 seconds to Steam handoff.
+- Local same-size synthetic fixture: 71.4s before, 8.7s after. Windows pending.
+- Reuse existing snapshots. Close anyway remains a separate pending change.
+
+4.0.0-safety.5 | private quick-launch check | 2026-09-19
+- New QuickLaunch action checks metadata, versions, names and lengths without
+  hashing mod payloads. Missing/changed/extra content blocks; no quick repairs.
+- Icy launch button uses QuickLaunch. Its success says LAUNCH REQUESTED and
+  explicitly does not claim full integrity or backup-payload verification.
+- Verify + Repair exposes the unchanged full hashing/recovery/launch workflow.
+- Existing safety.4 snapshots are compatible; no new backup required.
+- Percentage and Close anyway remain pending, recorded in the included notes.
+
+4.0.0-safety.4 | private empty-temp compatibility check | 2026-09-19
+- Accept an empty top-level .temp directory without changing or deleting it.
+- Continue blocking nonempty, linked, or file-shaped .temp entries.
+- Add four regression tests: 103/103 pass locally; native Windows run pending.
+- Safety.3 passed 99/99 on user Windows with native Robocopy.
+
+4.0.0-safety.3 | private path-compatibility check | 2026-09-19
+- Accept the observed ASA pathOnDisk form: 83374/projectId_fileId.
+- Resolve identity against the installation Mods directory, never shell cwd.
+- Reject wrong game/project/version, extra path segments and path traversal.
+- Apply identical recorded-path checks to diagnostic and protected operations.
+- Keep OutOfDate and unknown .temp findings visible; do not delete or repair them.
+- Print progress guidance before isolated Windows tests start.
+- Previous safety.2 passed 88/88 tests on user's Windows PowerShell 5.1 with
+  native Robocopy. This changed build still needs its own native results.
+
+The real-installation launcher remains read-only. No public release approval.

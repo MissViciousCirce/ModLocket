@@ -1,0 +1,19 @@
+MODLOCKET CONNECTION PREVIEW - PRIVACY
+
+No telemetry, advertising or automatic background update requests.
+Check for Updates, when you have configured API access and click Check now,
+sends known mod project IDs to https://api.curseforge.com/v1/mods with the
+approved API key. CurseForge receives ordinary connection information such as
+your IP address. Mod payloads, local paths, names and backup files are not sent.
+API errors are sanitized; the key is not printed or passed in worker arguments.
+Keys entered in the app are encrypted for the current Windows account using
+Windows PowerShell secure-string storage. The environment-variable alternative
+is plaintext in the process environment; the Windows account can access it.
+
+The app reads local mod records, selected snapshot metadata and saved lists.
+Saving a list appends a small local JSON file in ModLocketSafetyPreview/ModLists.
+Lists contain names, mod IDs, file IDs and the local installation path.
+Full backup/repair operations retain their existing behavior. Comparisons do
+not alter installed mods, ARK library.json, full backups or the active pointer.
+Do not distribute personal snapshots, keys or private diagnostic reports.
+Tests use synthetic temporary fixtures and mock network responses only.
