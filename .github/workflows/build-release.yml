@@ -1,0 +1,123 @@
+name: Build ModLocket
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: modlocket-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: powershell
+    steps:
+      - name: Get project files
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Check project layout
+        run: |
+          $ErrorActionPreference = 'Stop'
+          foreach ($file in @('ModLocket.ps1', 'Build-ModLocket.ps1', 'tests/Safety.Tests.ps1')) {
+            if (-not (Test-Path -LiteralPath $file -PathType Leaf)) {
+              throw "Missing $file at the repository root. Upload the extracted app contents, not just the ZIP or its parent folder."
+            }
+          }
+
+      - name: Run isolated Windows safety tests
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\tests\Safety.Tests.ps1 -NativeCopy 2>&1 | Tee-Object -FilePath Windows-Test-Results.txt
+          if ($LASTEXITCODE -ne 0) { throw 'Safety tests failed. EXE and release creation stopped.' }
+
+      - name: Save test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ModLocket-test-results
+          path: Windows-Test-Results.txt
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Install pinned EXE compiler
+        run: |
+          $ErrorActionPreference = 'Stop'
+          [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+          Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Scope CurrentUser -Force | Out-Null
+          Install-Module -Name ps2exe -RequiredVersion 1.0.18 -Scope CurrentUser -Repository PSGallery -Force -AllowClobber
+
+      - name: Build EXE and checksum
+        env:
+          BUILD_REF: ${{ github.ref_name }}
+          BUILD_REF_TYPE: ${{ github.ref_type }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $version = '4.0.0.4'
+          if ($env:BUILD_REF_TYPE -eq 'tag') {
+            if ($env:BUILD_REF -notmatch '^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:-[A-Za-z0-9.-]+)?$') {
+              throw 'Use a version tag such as v4.0.0-preview.1 or v4.0.1.'
+            }
+            $version = "$($Matches[1]).$($Matches[2]).$($Matches[3]).0"
+          }
+          & .\Build-ModLocket.ps1 -FileVersion $version
+          $hash = (Get-FileHash -LiteralPath .\dist\ModLocket.exe -Algorithm SHA256).Hash.ToLowerInvariant()
+          [IO.File]::WriteAllText((Join-Path $PWD 'dist/SHA256SUMS.txt'), "$hash  ModLocket.exe`n", (New-Object Text.UTF8Encoding($false)))
+
+      - name: Save downloadable EXE
+        uses: actions/upload-artifact@v4
+        with:
+          name: ModLocket-Windows
+          path: |
+            dist/ModLocket.exe
+            dist/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 14
+
+  draft-release:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - name: Retrieve this run's compiled EXE
+        uses: actions/download-artifact@v4
+        with:
+          name: ModLocket-Windows
+          path: release-assets
+
+      - name: Create draft release for review
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > release-notes.md <<'NOTES'
+          Windows packaging preview of ModLocket for ASA.
+
+          Download ModLocket.exe. Existing mod backups and settings remain separate.
+          SHA256SUMS.txt contains the executable's checksum.
+
+          Isolated Windows safety tests passed before this build. Test the packaged
+          application on Windows before publishing this draft; compilation and
+          fixture tests alone do not establish the packaged UI or game integration.
+          The executable is unsigned. No API credentials or mod files are bundled.
+          NOTES
+          gh release create "$RELEASE_TAG" \
+            release-assets/ModLocket.exe release-assets/SHA256SUMS.txt \
+            --repo "$GH_REPO" --verify-tag --draft \
+            --title "ModLocket $RELEASE_TAG" --notes-file release-notes.md
