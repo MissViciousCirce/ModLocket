@@ -1,0 +1,19 @@
+MODLOCKET PERSONAL UPDATER - PRIVACY
+
+No telemetry or background update requests. Clicking Check for Updates sends
+installed mod project/file IDs and your configured API key to api.curseforge.com.
+Clicking Download and install updates retrieves files from approved HTTPS
+CurseForge CDN hosts. The API key is sent in the x-api-key header, never in URLs,
+logs or worker arguments. Redirects to other hosts are rejected.
+Mod payloads, local paths and backups are not uploaded. CurseForge receives
+ordinary connection information such as your IP address.
+
+Saved keys remain encrypted for your Windows account. Environment-variable
+keys are plaintext in that process environment. No key is bundled with the app.
+
+Update plans and transaction records are stored locally under
+ModLocketSafetyPreview. They contain installation paths, project/file metadata,
+and prior library records. Retained old versions permit interruption recovery.
+Do not share these personal transaction folders or account metadata.
+Existing backup snapshots are not silently changed by installing updates.
+Tests use synthetic temporary data and mock network responses.

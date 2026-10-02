@@ -1,0 +1,2 @@
+4.0.0-personal.8
+Windows updater status and active retry fix

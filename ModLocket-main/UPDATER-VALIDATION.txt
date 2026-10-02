@@ -1,0 +1,15 @@
+Personal build 07 validation
+
+PowerShell 7.4.6 on Linux; synthetic data, mocked network.
+Existing safety suite: 199 passed, 0 failed.
+Updater suite: 16 passed, 0 failed.
+12 Windows-only process-containment tests skipped.
+PowerShell parsing, C# helper compilation and EXE packaging preparation passed.
+No live API credentials or ARK installation used. Windows PowerShell 5.1,
+DPAPI, Windows UI and real game loading are not validated here.
+
+Updater tests cover installation, original-version retention, exact metadata
+preservation, network failure, checksum failure, stale state, running ARK,
+disk space, wrong platform, pending states, archive traversal/case collisions/
+links, interruption before/after metadata commit, external metadata changes,
+CDN host restrictions, duplicate JSON keys and stale download bookkeeping.

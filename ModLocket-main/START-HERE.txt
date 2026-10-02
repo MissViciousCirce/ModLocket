@@ -1,0 +1,44 @@
+MODLOCKET - PERSONAL BUILD 08 - WINDOWS MOD UPDATES
+
+1. Extract this ZIP into its own folder.
+2. Close the old ModLocket window. Run Start-ModLocket.cmd from THIS folder.
+3. Click CHECK FOR UPDATES. Your saved CurseForge key is reused.
+4. Review the Windows releases, download size, and any blocked mods.
+5. Click Download and install updates when installable updates exist.
+   Otherwise the active button says Check again and refreshes the scan.
+   Distribution-blocked updates must be installed through ARK.
+   Keep ARK closed during ModLocket installation.
+6. After installation, click BACKUP and save a fresh snapshot, then LAUNCH ARK.
+
+This build downloads and installs available free Windows client releases for
+mods already installed in an ARK installedMods library. It does not update
+server or console files. Pending/invalid installations, missing dependencies,
+premium files, unsupported metadata and unavailable download permissions are
+reported individually and left unchanged. For those, use ARK's mod manager.
+ARK can still require the exact version used by a particular server.
+
+Downloads use your API key with CurseForge. Project-read access does not imply
+file-download access: a 401/403 during downloading must be resolved with
+CurseForge. No keys are included in this ZIP or sent to other hosts.
+
+Archives are size/checksum checked and extracted into staging. ZIP paths and
+module layout are validated. Existing versions and exact prior library bytes
+are retained in ModLocketSafetyPreview/UpdateTransactions. Never delete this
+folder while an update or recovery is in progress. Interrupted publication is
+recovered on the next update, backup or protected-launch action, while ARK is
+closed. Changed external metadata stops recovery for manual review.
+Existing full snapshots and the selected snapshot pointer remain unchanged.
+
+The installer requires extra free space for the download, extracted update,
+and retained old version. Downloads are not resumed after interruption.
+
+This is runnable PowerShell source, NOT a newly compiled EXE. The old EXE does
+not gain changes merely by being placed beside these files. Start with the CMD.
+Build-ModLocket.ps1 includes the new files when compiling an EXE on Windows.
+
+Build 08 validation: source and package checks only in this environment.
+PowerShell and the Windows UI were unavailable, so the updated regression
+checks have NOT been executed here. Live CurseForge access and loading updates
+in ARK also require on-device testing. Run-Update-Checks.cmd runs isolated
+updater checks without using your key or installed mods.
+This is a personal test build, not a verified public release.
