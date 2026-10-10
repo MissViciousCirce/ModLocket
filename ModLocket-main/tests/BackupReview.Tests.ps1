@@ -1,4 +1,4 @@
-# Loaded by Safety.Tests.ps1; disposable fixtures only.
+﻿# Loaded by Safety.Tests.ps1; disposable fixtures only.
 function Add-ReviewFixtureMod($Paths) {
     [IO.Directory]::CreateDirectory((Join-Path $Paths.ModsDir '234567_200')) | Out-Null
     [IO.File]::WriteAllText((Join-Path $Paths.ModsDir '234567_200/new.pak'), 'new-mod')

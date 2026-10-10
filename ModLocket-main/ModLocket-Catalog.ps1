@@ -1,4 +1,4 @@
-# Metadata comparison only. These actions cannot approve launch or change installed mods.
+﻿# Metadata comparison only. These actions cannot approve launch or change installed mods.
 . (Join-Path $PSScriptRoot 'ModLocket-CurseForge.ps1')
 function Get-ModListState($Paths) {
     $root=Join-SafePath $Paths.GuardRoot 'ModLists'

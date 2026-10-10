@@ -23,7 +23,7 @@ Add-Type -AssemblyName System.Drawing
 [System.Windows.Forms.Application]::SetCompatibleTextRenderingDefault($false)
 
 $AppName = 'ModLocket for ASA'
-$AppVersion = '4.0.0-personal.7'
+$AppVersion = '4.0.0-personal.9-nobe'
 $ScriptRoot = Split-Path -Parent $PSCommandPath
 $CoreScript = Join-Path $ScriptRoot 'ModLocket-Core.ps1'
 Add-Type -Path (Join-Path $ScriptRoot 'ModLocket-Worker.cs')
@@ -52,6 +52,7 @@ $Colors = @{
 . (Join-Path $ScriptRoot 'ModLocket-Theme.ps1')
 . (Join-Path $ScriptRoot 'ModLocket-Comparison-UI.ps1')
 . (Join-Path $ScriptRoot 'ModLocket-Update-UI.ps1')
+. (Join-Path $ScriptRoot 'ModLocket-Restore-UI.ps1')
 function Get-BrandCrop {
     if (-not (Test-Path -LiteralPath $BrandImagePath)) { return $null }
     return [System.Drawing.Image]::FromFile($BrandImagePath)
@@ -288,9 +289,18 @@ $launchButton.Font = New-Object Drawing.Font('Segoe UI Semibold',13)
 $backupButton = New-ActionButton 'BACKUP' 'Save your current mods' 24 180 234 90 $Colors.Lavender $Colors.PinkHot 16
 $inventoryButton = New-ActionButton 'MY MOD LIST' 'Export IDs and names' 272 180 234 90 $Colors.Blue $Colors.BlueHot 16
 $manageButton = New-ActionButton 'MANAGE BACKUPS' 'Saved copies and storage' 24 288 234 90 $Colors.Butter $Colors.ButterHot 16
-$restoreButton = New-ActionButton 'RESTORE MISSING FILES' 'Check, restore + launch' 272 288 234 90 $Colors.Peach $Colors.PeachHot 16
+$restoreButton = New-ActionButton 'RESTORE MISSING MODS' 'Files + installation records' 272 288 234 90 $Colors.Peach $Colors.PeachHot 16
 $restoreButton.Font = New-Object Drawing.Font('Segoe UI Semibold',9.5)
 $updatesButton = New-ActionButton 'CHECK FOR UPDATES' 'Review and install Windows updates' 24 410 482 72 $Colors.Mint $Colors.MintHot 16
+$launchAnywayLink=New-Object Windows.Forms.LinkLabel
+$launchAnywayLink.Text='Launch anyway - allow outdated mods'
+$launchAnywayLink.Location=New-Object Drawing.Point 24,381
+$launchAnywayLink.Size=New-Object Drawing.Size 482,25
+$launchAnywayLink.TextAlign='MiddleCenter';$launchAnywayLink.LinkColor=$Colors.Ice
+$launchAnywayLink.ActiveLinkColor=$Colors.Purple;$launchAnywayLink.BackColor=$Colors.Card
+$launchAnywayLink.AccessibleDescription='Launch ARK through Steam without ModLocket version or file checks. Existing mods are kept. ARK and servers may still require updates.'
+$actionsPanel.Controls.Add($launchAnywayLink)
+$launchAnywayLink.Add_LinkClicked({ Request-LaunchAnyway })
 $connectionSettings = New-Object Windows.Forms.LinkLabel
 $connectionSettings.Text = 'API settings'
 $connectionSettings.Location = New-Object Drawing.Point 386,31
@@ -313,7 +323,7 @@ $connectionSettings.Add_LinkClicked({
 # Hover shows timing help. Keyboard users explicitly press the info button; focus alone stays quiet.
 $restoreInfo = New-Object Windows.Forms.Button
 $restoreInfo.Text = 'i'
-$restoreInfo.AccessibleName = 'About Restore Missing Files'
+$restoreInfo.AccessibleName = 'About Restore Missing Mods'
 $restoreInfo.Location = New-Object Drawing.Point 472,321
 $restoreInfo.Size = New-Object Drawing.Size 24,24
 $restoreInfo.FlatStyle = 'Flat'; $restoreInfo.FlatAppearance.BorderSize=0
@@ -321,12 +331,12 @@ $restoreInfo.BackColor=$Colors.Peach; $restoreInfo.ForeColor=$Colors.Purple
 $restoreInfo.Font=New-Object Drawing.Font('Segoe UI',10,[Drawing.FontStyle]::Bold)
 $restoreInfo.UseVisualStyleBackColor=$false
 $restoreInfo.TabStop=$true
-$restoreInfo.AccessibleDescription='Explains what Restore Missing Files does and how long it can take.'
+$restoreInfo.AccessibleDescription='Explains how missing mods are restored from your selected backup.'
 Enable-InfoArtwork $restoreInfo $restoreButton
 $restoreInfo.Cursor=[Windows.Forms.Cursors]::Hand
 $actionsPanel.Controls.Add($restoreInfo)
 $restoreInfo.BringToFront()
-$restoreHelp = 'Checks your backup and restores missing mod files before launching ARK. This can take a few minutes, especially with large mod collections.'
+$restoreHelp = 'Reviews missing backed-up mods, restores their files and missing ARK records, and keeps newer installed versions. ARK stays closed during recovery.'
 $restoreTip=New-Object Windows.Forms.ToolTip
 $restoreTip.InitialDelay=350; $restoreTip.ReshowDelay=100; $restoreTip.AutoPopDelay=20000; $restoreTip.ShowAlways=$false
 $restoreTip.BackColor=$Colors.CardSoft; $restoreTip.ForeColor=$Colors.Text
@@ -516,6 +526,7 @@ function Set-StatusPill([ValidateSet('Standby', 'Working', 'Cleared', 'QuickLaun
 }
 
 function Set-BusyState([bool]$Busy) {
+    $launchAnywayLink.Enabled = -not $Busy
     foreach ($button in $actionButtons) { $button.Enabled = -not $Busy }
     $clearButton.Enabled = -not $Busy
     if (-not $Busy -and $null -ne $script:stageBar) { $script:stageBar.Tag=-2; $script:stageBar.Invalidate() }
@@ -547,7 +558,7 @@ function Update-BackupButton {
 
 function Start-GuardAction {
     param(
-        [ValidateSet('PlanBackup', 'ManageBackups', 'RemoveSnapshot', 'SelectSnapshot', 'CleanRepairStaging', 'PlanSetup', 'PlanRefresh', 'Setup', 'QuickLaunch', 'Launch', 'Inventory', 'Updates', 'PlanUpdates', 'InstallUpdates', 'SaveModList', 'Refresh', 'FullRestore')][string]$Action,
+        [ValidateSet('PlanRestore', 'RestoreMissing', 'PlanBackup', 'ManageBackups', 'RemoveSnapshot', 'SelectSnapshot', 'CleanRepairStaging', 'PlanSetup', 'PlanRefresh', 'Setup', 'QuickLaunch', 'Launch', 'Inventory', 'Updates', 'PlanUpdates', 'InstallUpdates', 'SaveModList', 'Refresh', 'FullRestore')][string]$Action,
         [switch]$AssumeYes, [string]$DisplayName, [string]$BackupApproval, [string]$TargetId, [string]$ManagementApproval
     )
     if ($script:ActiveWorker) { return }
@@ -819,7 +830,7 @@ function Invoke-DeferredHandoff($Result, [string]$Action) {
         throw 'The check finished while the close dialog was open. Click Launch again for a fresh check.'
     }
     # GUI owns this final decision; workers and their job never start Steam.
-    Start-Process 'steam://rungameid/2399830' -ErrorAction Stop
+    Start-Process 'steam://launch/2399830/option1' -ErrorAction Stop
     $Result.SteamRequested = $true
     $Result.NeedsSteamLaunch = $false
 }
@@ -886,6 +897,20 @@ $timer.Add_Tick({
             Set-BusyState $false
             Update-BackupButton
             if ($script:CancelRequested) { $form.Close(); return }
+            if ($completedAction -eq 'PlanRestore' -and $script:ExitCode -eq 0) {
+                $r=$script:ActionResult
+                if($r.Status -cne 'RestoreReview' -or [string]$r.Approval -cnotmatch '^[0-9a-f]{64}$'){throw 'Recovery review is incomplete.'}
+                $script:ActionClock.Stop();$progressLabel.Text='Review missing mods';Set-StatusPill 'Standby'
+                if(Show-ModRestoreReview $r){Start-GuardAction -Action RestoreMissing -BackupApproval $r.Approval -DisplayName 'Restore backed-up mods and installation records'}
+                return
+            }
+            if ($completedAction -eq 'RestoreMissing' -and $script:ExitCode -eq 0) {
+                $r=$script:ActionResult
+                if($r.Status -cne 'MissingModsRestored'){throw 'Recovery result is incomplete.'}
+                $script:ActionClock.Stop();$progressLabel.Text='Missing mods restored';Set-StatusPill 'Standby'
+                Add-LogLine ("Restored {0} mods: {1} files and {2} installation records. {3} backup entries still need attention. Use LAUNCH ARK, or Launch anyway for outdated mods." -f $r.ModCount,$r.FileCount,$r.RecordCount,$r.AttentionCount) $Colors.Success
+                return
+            }
             if ($completedAction -in @('PlanBackup','PlanSetup','PlanRefresh')) {
                 if ($script:ActionClock) { $script:ActionClock.Stop() }
                 $saveAction = if ($completedAction -ceq 'PlanBackup') { [string]$script:ActionResult.Action } elseif ($completedAction -ceq 'PlanSetup') { 'Setup' } else { 'Refresh' }
@@ -926,6 +951,7 @@ $timer.Add_Tick({
                 $script:ActionClock.Stop();$progressLabel.Text='Review available updates';Set-StatusPill 'Standby'
                 $updateChoice=Show-ModUpdatePlan $r
                 if($updateChoice -eq 'Retry'){Start-GuardAction -Action PlanUpdates -DisplayName 'Refresh CurseForge Windows updates'}
+                elseif($updateChoice -eq 'Ignore'){Request-LaunchAnyway}
                 elseif($updateChoice -eq 'OK' -and $r.UpdateCount -gt 0){Start-GuardAction -Action InstallUpdates -TargetId $r.Id -ManagementApproval $r.Approval -DisplayName 'Download, verify and install Windows mod updates'}
                 return
             }
@@ -1005,9 +1031,7 @@ $updatesButton.Add_Click({
 })
 $manageButton.Add_Click({ Start-GuardAction -Action ManageBackups -DisplayName 'Manage saved backups' })
 $restoreButton.Add_Click({
-    if (Confirm-Choice "This hashes the entire backup and installed collection, recovers missing files only when versions match, then launches ARK.`n`nIt can take several minutes. Changed or extra files block launch; existing files are not overwritten.`n`nRun full verification and launch?" 'Restore Missing Files') {
-        Start-GuardAction -Action Launch -DisplayName 'Full verification, missing-file repair and launch'
-    }
+    Start-GuardAction -Action PlanRestore -DisplayName 'Review missing backed-up mods'
 })
 
 $form.Add_FormClosing({

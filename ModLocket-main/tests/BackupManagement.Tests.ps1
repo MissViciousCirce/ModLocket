@@ -1,4 +1,4 @@
-# Synthetic fixtures only. Management operations must preserve live mod/index bytes.
+﻿# Synthetic fixtures only. Management operations must preserve live mod/index bytes.
 function Get-ManagedItem($Paths, [string]$Id) { return (Get-BackupManager $Paths).Items | Where-Object {$_.Id -ceq $Id} }
 function Run-ManagedAction($Paths, [string]$Name, $Item) {
     $TargetId = $Item.Id; $ManagementApproval = $Item.Approval

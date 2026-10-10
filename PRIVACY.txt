@@ -1,19 +1,19 @@
-MODLOCKET CONNECTION PREVIEW - PRIVACY
+MODLOCKET PERSONAL UPDATER - PRIVACY
 
-No telemetry, advertising or automatic background update requests.
-Check for Updates, when you have configured API access and click Check now,
-sends known mod project IDs to https://api.curseforge.com/v1/mods with the
-approved API key. CurseForge receives ordinary connection information such as
-your IP address. Mod payloads, local paths, names and backup files are not sent.
-API errors are sanitized; the key is not printed or passed in worker arguments.
-Keys entered in the app are encrypted for the current Windows account using
-Windows PowerShell secure-string storage. The environment-variable alternative
-is plaintext in the process environment; the Windows account can access it.
+No telemetry or background update requests. Clicking Check for Updates sends
+installed mod project/file IDs and your configured API key to api.curseforge.com.
+Clicking Download and install updates retrieves files from approved HTTPS
+CurseForge CDN hosts. The API key is sent in the x-api-key header, never in URLs,
+logs or worker arguments. Redirects to other hosts are rejected.
+Mod payloads, local paths and backups are not uploaded. CurseForge receives
+ordinary connection information such as your IP address.
 
-The app reads local mod records, selected snapshot metadata and saved lists.
-Saving a list appends a small local JSON file in ModLocketSafetyPreview/ModLists.
-Lists contain names, mod IDs, file IDs and the local installation path.
-Full backup/repair operations retain their existing behavior. Comparisons do
-not alter installed mods, ARK library.json, full backups or the active pointer.
-Do not distribute personal snapshots, keys or private diagnostic reports.
-Tests use synthetic temporary fixtures and mock network responses only.
+Saved keys remain encrypted for your Windows account. Environment-variable
+keys are plaintext in that process environment. No key is bundled with the app.
+
+Update plans and transaction records are stored locally under
+ModLocketSafetyPreview. They contain installation paths, project/file metadata,
+and prior library records. Retained old versions permit interruption recovery.
+Do not share these personal transaction folders or account metadata.
+Existing backup snapshots are not silently changed by installing updates.
+Tests use synthetic temporary data and mock network responses.

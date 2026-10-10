@@ -1,2 +1,2 @@
-4.0.0-online.4
-Private connection preview; live API access not yet verified.
+4.0.0-personal.9-nobe
+Build 09 - No BattlEye launch patch

@@ -1,4 +1,4 @@
-$ErrorActionPreference = 'Stop'
+﻿$ErrorActionPreference = 'Stop'
 try {
     Add-Type -Path (Join-Path $PSScriptRoot 'ModLocket-Worker.cs')
     $command = 'Write-Host "HOST-CHECK"; Write-Output "OUTPUT-CHECK"; Write-Host ''__MODLOCKET_PROGRESS__={"Stage":"Testing","Percent":50}''; Write-Error "EXPECTED-TEST-ERROR" -ErrorAction Continue; exit 7'

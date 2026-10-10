@@ -1,4 +1,4 @@
-param(
+﻿param(
     [Parameter(Mandatory=$true)][string]$GateName,
     [Parameter(Mandatory=$true)][string]$CommandBase64
 )

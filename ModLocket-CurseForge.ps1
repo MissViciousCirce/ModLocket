@@ -1,4 +1,4 @@
-# Shared connection settings. No key is included in the app, report or worker command.
+﻿# Shared connection settings. No key is included in the app, report or worker command.
 function Get-CurseForgeKeyPath {
     if (-not $env:LOCALAPPDATA) { throw 'Windows local application storage is unavailable.' }
     return Join-Path $env:LOCALAPPDATA 'ModLocketSafetyPreview/curseforge-key.txt'

@@ -2,7 +2,7 @@
 # No entry-point execution when dot-sourced with -LibraryOnly by the fixture tests.
 [CmdletBinding()]
 param(
-    [ValidateSet('Inspect','PlanBackup','ManageBackups','RemoveSnapshot','SelectSnapshot','CleanRepairStaging','PlanSetup','PlanRefresh','Setup','QuickLaunch','Launch','Inventory','Updates','PlanUpdates','InstallUpdates','SaveModList','Refresh','FullRestore')]
+    [ValidateSet('Inspect','PlanRestore','RestoreMissing','PlanBackup','ManageBackups','RemoveSnapshot','SelectSnapshot','CleanRepairStaging','PlanSetup','PlanRefresh','Setup','QuickLaunch','Launch','Inventory','Updates','PlanUpdates','InstallUpdates','SaveModList','Refresh','FullRestore')]
     [string]$Action = 'Inspect',
     [string]$ArkRoot,
     [switch]$Yes,
@@ -13,7 +13,7 @@ param(
     [string]$ManagementApproval
 )
 $ErrorActionPreference = 'Stop'
-$ScriptVersion = '4.0.0-personal.7'
+$ScriptVersion = '4.0.0-personal.9-nobe'
 $GameId = 83374
 $SteamAppId = 2399830
 
@@ -664,7 +664,7 @@ function Invoke-ProtectedLaunch($Paths) {
     Write-Good "Local snapshot verified: $($snapshot.Manifest.Mods.Count) mods; repaired $($missing.Count) missing files."
     if ($DeferSteamLaunch) { Write-Info 'Local verification complete; returning launch approval to the window.' }
     else { Write-Info 'Requesting Steam launch. This does not prove successful game loading or online currency.' }
-    if (-not $DeferSteamLaunch) { Start-Process "steam://rungameid/$SteamAppId" -ErrorAction Stop }
+    if (-not $DeferSteamLaunch) { Start-Process "steam://launch/$SteamAppId/option1" -ErrorAction Stop }
     return [pscustomobject]@{
         Status = 'Verified'; SnapshotId = $snapshot.Id; ModCount = $snapshot.Manifest.Mods.Count
         FilesChecked = $snapshot.Manifest.Files.Count; FilesRestored = $missing.Count
@@ -733,7 +733,7 @@ function Invoke-QuickLaunch($Paths) {
         Write-Info 'Requesting Steam launch.'
         Write-StageProgress 'Requesting Steam launch'
     }
-    if (-not $DeferSteamLaunch) { Start-Process "steam://rungameid/$SteamAppId" -ErrorAction Stop }
+    if (-not $DeferSteamLaunch) { Start-Process "steam://launch/$SteamAppId/option1" -ErrorAction Stop }
     return [pscustomobject]@{
         Status = 'QuickChecked'; SnapshotId = $snapshot.Id; ModCount = $snapshot.Manifest.Mods.Count
         FilesChecked = $count; FilesRestored = 0; IntegrityVerified = $false
@@ -867,8 +867,11 @@ function Invoke-GuardAction($Paths, [string]$RequestedAction) {
     $lock = Enter-OperationLock $Paths
     try {
         Assert-ArkClosed
+        Repair-InterruptedRestores $Paths
         Repair-InterruptedUpdates $Paths
         switch ($RequestedAction) {
+            'PlanRestore' { return Get-ModRestoreReview $Paths }
+            'RestoreMissing' { return Restore-MissingMods $Paths $BackupApproval }
             'PlanUpdates' { return Get-ModUpdatePlan $Paths }
             'InstallUpdates' { return Install-ModUpdates $Paths $TargetId $ManagementApproval }
             'RemoveSnapshot' { return Remove-ManagedSnapshot $Paths $TargetId $ManagementApproval }
@@ -890,6 +893,7 @@ function Invoke-GuardAction($Paths, [string]$RequestedAction) {
 . (Join-Path $PSScriptRoot 'ModLocket-Backups.ps1')
 . (Join-Path $PSScriptRoot 'ModLocket-Catalog.ps1')
 . (Join-Path $PSScriptRoot 'ModLocket-Updater.ps1')
+. (Join-Path $PSScriptRoot 'ModLocket-Restore.ps1')
 
 if ($LibraryOnly) { return }
 try {

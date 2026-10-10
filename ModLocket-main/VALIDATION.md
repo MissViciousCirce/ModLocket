@@ -1,33 +1,63 @@
-# Online comparison preview 04 validation
+# No BattlEye and updater patch - 2026-10-10
 
-199 passed, 0 failed on PowerShell 7.6.6/Linux, including 23 new cases.
-Twelve native Windows process/interruption tests skipped; expected Windows
-suite total is 211. All PowerShell files parsed as part of the suite.
+Validated on Windows PowerShell 5.1:
 
-New tests cover read-only local comparison without a backup, missing library
-and folders, changed IDs, tiny lists without payloads, preservation of existing
-snapshots and pointers, absent remembered mods, stale approval, malformed and
-duplicate identities, integer precision, corrupt lists, interrupted publication,
-ARK/account ambiguity, empty sets, matched/different/omitted published IDs,
-wrong-game/duplicate API results, failed batches, 101-ID batching, concurrent
-local changes, fixed HTTPS endpoint/redirect policy and sanitized HTTP errors.
+- 211 Windows safety checks passed with NativeCopy, including worker containment
+  and native Robocopy cancellation.
 
-All network calls are mocked. No approved key was available. These passes do
-not prove CurseForge exposes this game's projects to a given key, or that its
-main-file ID is suitable for the user's platform/server. Published differences
-are review findings, not automatic update or install instructions.
+- 26 updater fixture tests passed, including premium/current classification,
+  freemium access, stale project summaries, newer installed versions, timezone
+  offsets, expired plans, installation, rollback and interrupted recovery.
+- 24 recovery/Launch anyway fixture tests passed.
+- NoBattlEye.Tests.ps1 passed: both protected GUI launch paths request
+  `steam://launch/2399830/option1`; cancellation, active close prompts, invalid
+  or stale approvals, and launch failures remain blocked. Steam was mocked.
+- Personal.Tests.ps1 passed: syntax, encrypted key save/reload/replacement,
+  automatic reuse, and destination-space checks.
+- Live AutoDoors Windows file 8441790 downloaded through the app downloader
+  (459,973 bytes) and passed the published checksums. No ARK files were changed.
 
-The API helper uses the documented POST /v1/mods endpoint and x-api-key header:
-https://docs.curseforge.com/rest-api/
+Live CurseForge metadata confirmed Sci-Fi Soldier Windows file 7641254 is the
+current release and AnimeGirlCosmetics installed file 6571379 is a beta newer
+than stable file 5205835. AnimeGirlCosmetics disables third-party distribution;
+its official download URL request was denied. This is not evidence that the
+API key is generally invalid.
 
-Full snapshot and worker modules remain byte-identical to UI03. Core changes
-route two comparison/list actions and load their new module; existing launch,
-copy, restore and deletion logic is retained. Approved artwork is unchanged.
-No payload deduplication or automatic mod downloading is implemented.
+Actual ARK startup without BattlEye and live update installation were not tested.
+The earlier intermittent saved-key error in a separately launched desktop
+process was not conclusively resolved; isolated key reuse tests passed.
 
-Windows Forms rendering, DPI, native encrypted credential storage, and actual
-live API integration remain unverified. Check-Interface.cmd provides a sample
-UI construction check without reading real mod records or making HTTP calls.
+# Earlier Build 09 validation - 2026-10-02
 
-A small list is not an offline recovery copy and cannot authorize the existing
-protected launch. Saving one never deletes or supersedes a full snapshot.
+242 automated checks passed on PowerShell 7.4.13/Linux:
+
+- 24 missing-mod recovery and Launch anyway checks.
+- 19 existing updater checks.
+- 199 existing backup, catalog, launch, and management checks.
+
+Twelve Windows kernel/process tests were skipped. Windows Forms appearance,
+Windows PowerShell 5.1 execution, and restoration into a running ARK installation
+have not been verified. This is a personal test build, not a verified release.
+
+The new checks restore whole folders and missing installation records from
+real synthetic snapshots; exercise an empty installed-mod array and a missing
+Mods directory; preserve newer versions, new mods, enabled preferences and
+large integer account identifiers; retain OutOfDate and Pending states; reject
+conflicting content, damaged backups, stale approvals, malformed records and
+links; and recover interruptions during copying and before the atomic metadata
+commit. Concurrent external metadata changes stop replay without overwriting.
+
+Launch anyway tests invoke the actual callback with a mocked Steam launch.
+They verify that outdated/pending entries do not block it, a backup/API key is
+not required, mod payload and metadata hashes do not change, and active or
+unfinished writes still prevent launch.
+
+Recovery is additive: selected payloads are copied without overwrites, then
+missing records are inserted into the current JSON with exact source spans.
+Existing records and unrelated JSON fields are not reserialized. Exact before
+and after metadata copies and a journal are retained under RestoreTransactions.
+Interrupted recovery resumes from verified files; it does not reset externally
+modified records. A complete missing or malformed library.json is not guessed.
+
+Tests make no real CurseForge requests or Steam launches. Passing does not
+establish that ARK will load an old mod or that a server will accept its version.

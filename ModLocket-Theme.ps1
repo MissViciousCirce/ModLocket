@@ -174,6 +174,7 @@ function Set-DialogTheme($Dialog) {
     $Dialog.AutoScaleDimensions=New-Object Drawing.SizeF 96,96
     $Dialog.AutoScaleMode='Dpi'
     $Dialog.ShowInTaskbar=$false
+    if ($form -and $form.Icon) { $Dialog.Icon=$form.Icon }
     $Dialog.Add_HandleCreated({param($sender,$e);[ModLocketWindowTheme]::Apply($sender.Handle)})
     $queue=New-Object 'Collections.Generic.Queue[System.Windows.Forms.Control]'
     foreach($control in $Dialog.Controls){$queue.Enqueue($control)}

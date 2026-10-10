@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param([switch]$NativeCopy, [string]$LockProbe)
 $ErrorActionPreference = 'Stop'
 if ($LockProbe) {
@@ -35,7 +35,7 @@ function Write-Info([string]$Text) { $script:Messages.Add($Text) }
 function Write-Good([string]$Text) { $script:Messages.Add($Text) }
 function Write-Warn([string]$Text) { $script:Messages.Add($Text) }
 function Assert-ArkClosed { if ($script:ArkRunning) { throw 'TEST: ARK started.' } }
-function Start-Process { param($FilePath, $ErrorAction); $script:Launches++; if ($script:LaunchFailure) { throw 'TEST: Steam unavailable.' } }
+function Start-Process { param($FilePath, $ErrorAction); if ($FilePath -cne 'steam://launch/2399830/option1') { throw 'TEST: Expected the no-BattlEye Steam launch option.' }; $script:Launches++; if ($script:LaunchFailure) { throw 'TEST: Steam unavailable.' } }
 function Assert-FreeSpace($Destination, $RequiredBytes) {
     if ($script:LowSpace) { throw 'TEST: insufficient free space.' }
     # Keep space checks deterministic; native Windows tests separately call the real helper.
@@ -247,7 +247,8 @@ Run-Test 'Global file lock blocks a second action and releases after failure' {
 Run-Test 'Separate PowerShell process cannot acquire an active installation lock' {
     $p = New-Fixture; $lock = Enter-OperationLock $p
     try {
-        $exe = [Diagnostics.Process]::GetCurrentProcess().MainModule.FileName
+        $exe = Join-Path $PSHOME 'powershell.exe'
+        if (-not (Test-Path -LiteralPath $exe)) { $exe = Join-Path $PSHOME 'pwsh' }
         & $exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $PSCommandPath -LockProbe $p.Lock
         Assert-True ($LASTEXITCODE -eq 23) 'Child process bypassed lock.'
     } finally { $lock.Dispose() }

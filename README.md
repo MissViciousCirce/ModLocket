@@ -1,5 +1,15 @@
 # 🔒 ModLocket
 
+Current source build: **4.0.0-personal.9-nobe**. Start it with
+`Start-ModLocket.cmd`. All ARK launch actions request Steam's **No BattlEye**
+option, for single-player or servers that do not require BattlEye.
+
+This build fixes updater status and timezone handling. It downloads eligible
+stable Windows updates through CurseForge, checks archive hashes, and retains
+previous versions for recovery. Premium player authentication and mods that
+disable third-party distribution still require ARK. Existing newer beta files
+are retained. See `CHANGELOG.txt` and `VALIDATION.md` for details and test limits.
+
 ### A Windows companion for ARK: Survival Ascended that helps keep your mods from disappearing.
 
 ModLocket was created because ARK: Survival Ascended mods can sometimes disappear from the local installation, stop showing up, or otherwise leave you wondering why a cosmetic or mod you were using suddenly isn't available anymore.
@@ -53,27 +63,32 @@ ModLocket can check your recorded mod setup before launching ARK so missing file
 
 ---
 
-## 🌐 CurseForge Update Checking — In Development
+## Missing-mod recovery and launch options - personal build 09
 
-I'm currently waiting for approval for a CurseForge API key.
+**RESTORE MISSING MODS** previews missing backed-up mods and recovers both their
+files and missing installation records. It uses your selected full backup and
+keeps unrelated installed mods, newer versions, and existing enabled settings.
+Conflicting or pending entries are shown for attention; they do not prevent
+recovery of other eligible mods. Recovery does not launch ARK automatically.
 
-Once API access is available, ModLocket is intended to compare your recorded mod versions against the currently published CurseForge versions and tell you when an update may be available.
+**Launch anyway - allow outdated mods** opens ARK through Steam without
+ModLocket's version/file checks. It leaves your mods and installation records
+unchanged. ARK and servers can still require updates; ModLocket cannot force
+an older version to load. An unfinished mod-writing operation must finish first.
 
-### Current status
+A full backup is required for offline recovery; a saved list of mod IDs is not
+enough. Restore recovers the saved version, not a newer download. See
+START-HERE.txt and VALIDATION.md for instructions and the limits of testing.
 
-✅ Local mod comparison works
+## CurseForge downloads
 
-✅ Snapshots and backups work
+CHECK FOR UPDATES now opens a Windows-client update review with a **Download and install updates** action. It uses the saved API key, verifies archive lengths and hashes, rejects unsafe ZIP paths, verifies the module layout, and retains old versions plus original library metadata for interruption recovery.
 
-✅ Missing-mod detection works
+After installation, make a fresh backup before protected launch. The installer does not silently replace existing snapshots. Pending/invalid installs, premium content, missing dependencies and unsupported formats require ARK's mod manager. API permission to read metadata does not establish download permission. Server-version matching is not inferred from a newer file ID.
 
-✅ Restore functionality works
+See START-HERE.txt for the launch instructions and limitations. Run Start-ModLocket.cmd in this folder; an older EXE will still run the old code. This build has synthetic test coverage but has not been tested with live ARK or the Windows UI.
 
-🚧 CurseForge online update checking is awaiting API access
-
-ModLocket does **not** include or distribute a CurseForge API key.
-
-Please do not share your personal API key in bug reports, screenshots, chats, or diagnostic files.
+Implementation references: [CurseForge REST API](https://docs.curseforge.com/rest-api/), [installed-mod fields and status](https://docs.curseforge.com/docs/game-integration/unreal/installing-mods/), and [CDN API-key headers](https://blog.curseforge.com/introducing-api-key-authentication-for-curseforge-file-downloads/).
 
 ---
 
@@ -171,7 +186,7 @@ ModLocket is designed to operate primarily on your local computer.
 
 No shared CurseForge developer credential is embedded in the application.
 
-Online CurseForge requests will only be used for update/version checking once that functionality is available.
+Explicit update checks and downloads use CurseForge API and CDN requests; see PRIVACY.txt.
 
 See `PRIVACY.txt` for additional details.
 

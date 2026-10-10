@@ -1,8 +1,8 @@
-# ModLocket safety checkpoint. Windows PowerShell 5.1-compatible source.
+﻿# ModLocket safety checkpoint. Windows PowerShell 5.1-compatible source.
 # No entry-point execution when dot-sourced with -LibraryOnly by the fixture tests.
 [CmdletBinding()]
 param(
-    [ValidateSet('Inspect','PlanBackup','ManageBackups','RemoveSnapshot','SelectSnapshot','CleanRepairStaging','PlanSetup','PlanRefresh','Setup','QuickLaunch','Launch','Inventory','Updates','SaveModList','Refresh','FullRestore')]
+    [ValidateSet('Inspect','PlanRestore','RestoreMissing','PlanBackup','ManageBackups','RemoveSnapshot','SelectSnapshot','CleanRepairStaging','PlanSetup','PlanRefresh','Setup','QuickLaunch','Launch','Inventory','Updates','PlanUpdates','InstallUpdates','SaveModList','Refresh','FullRestore')]
     [string]$Action = 'Inspect',
     [string]$ArkRoot,
     [switch]$Yes,
@@ -13,7 +13,7 @@ param(
     [string]$ManagementApproval
 )
 $ErrorActionPreference = 'Stop'
-$ScriptVersion = '4.0.0-online.4'
+$ScriptVersion = '4.0.0-personal.9-nobe'
 $GameId = 83374
 $SteamAppId = 2399830
 
@@ -229,7 +229,7 @@ function Assert-LibraryVerified($Library) {
     $bad = @($Library.Entries | Where-Object { $_.Issues.Count -gt 0 })
     if ($bad.Count) {
         foreach ($entry in $bad) { Write-Warn "$($entry.Name) [$($entry.ModId)]: $($entry.Issues -join '; ')" }
-        throw "$($bad.Count) of $($Library.Entries.Count) library entries need attention. No ready result is permitted."
+        throw "$($bad.Count) of $($Library.Entries.Count) library entries need attention. Use CHECK FOR UPDATES for downloadable Windows releases. Pending or premium installs must be completed in ARK first. No ready result is permitted."
     }
 }
 function Test-RecordedModPath($Paths, $Entry) {
@@ -328,11 +328,49 @@ function Assert-TreeMatches([string]$Root, [object[]]$Files) {
         Write-StageProgress $stage $done $total
     }
 }
-function Assert-FreeSpace([string]$Destination, [long]$RequiredBytes) {
+function Get-DestinationSpace([string]$Destination) {
     Assert-NoLinks $Destination
-    $drive = New-Object IO.DriveInfo ([IO.Path]::GetPathRoot([IO.Path]::GetFullPath($Destination)))
-    if (-not $drive.IsReady -or $drive.AvailableFreeSpace -lt ($RequiredBytes + 1GB)) {
-        throw 'Not enough free space for a separate backup plus a 1 GB safety margin. Existing snapshots were not changed.'
+    $full = [IO.Path]::GetFullPath($Destination)
+    $probe = $full
+    while (-not [IO.Directory]::Exists($probe)) {
+        $parent = [IO.Path]::GetDirectoryName($probe.TrimEnd([IO.Path]::DirectorySeparatorChar))
+        if (-not $parent -or $parent -eq $probe) { throw "Cannot find an accessible folder for the space check: $full" }
+        $probe = $parent
+    }
+    if ($env:OS -eq 'Windows_NT') {
+        if (-not ('ModLocketDiskSpace' -as [type])) {
+            Add-Type -TypeDefinition @'
+using System;
+using System.ComponentModel;
+using System.Runtime.InteropServices;
+public static class ModLocketDiskSpace {
+    [DllImport("kernel32.dll", EntryPoint="GetDiskFreeSpaceExW", CharSet=CharSet.Unicode, SetLastError=true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool Query(string path, out ulong available, out ulong total, out ulong free);
+    public static ulong[] Read(string path) {
+        ulong available, total, free;
+        if (!Query(path, out available, out total, out free))
+            throw new Win32Exception(Marshal.GetLastWin32Error());
+        return new ulong[] { available, total, free };
+    }
+}
+'@
+        }
+        try { $values = [ModLocketDiskSpace]::Read($probe.TrimEnd('\') + '\') }
+        catch { throw "Could not read free space for '$probe'. Windows reported: $($_.Exception.GetBaseException().Message). No backup was started." }
+        $available = [long]$values[0]; $totalFree = [long]$values[2]
+    } else {
+        # Portable fixture tests only. Windows always uses the destination query above.
+        $drive = New-Object IO.DriveInfo ([IO.Path]::GetPathRoot($probe))
+        if (-not $drive.IsReady) { throw "The destination volume is not ready: $probe" }
+        $available = [long]$drive.AvailableFreeSpace; $totalFree = [long]$drive.TotalFreeSpace
+    }
+    return [pscustomobject]@{ AvailableBytes=$available; TotalFreeBytes=$totalFree; CheckedPath=$probe; Destination=$full }
+}
+function Assert-FreeSpace([string]$Destination, [long]$RequiredBytes) {
+    $space = Get-DestinationSpace $Destination
+    if ($space.AvailableBytes -lt ($RequiredBytes + 1GB)) {
+        throw ("Not enough space at {0}. Available to this Windows account: {1:N1} GiB; required with reserve: {2:N1} GiB. Existing backups were not changed." -f $space.CheckedPath, ($space.AvailableBytes/1GB), (($RequiredBytes+1GB)/1GB))
     }
 }
 function Invoke-Robocopy([string]$Source, [string]$Destination) {
@@ -455,9 +493,10 @@ function Get-BackupReview($Paths, [bool]$Refresh) {
     })
     if (-not $layout.Count) { throw 'There are no installed files to back up.' }
     $bytes = [long](($layout | Measure-Object Length -Sum).Sum) + (Get-Item -LiteralPath $catalog.Library.Path).Length
-    $drive = New-Object IO.DriveInfo ([IO.Path]::GetPathRoot([IO.Path]::GetFullPath($Paths.GuardRoot)))
-    if (-not $drive.IsReady) { throw 'The backup drive is not ready.' }
-    $available = [long]$drive.AvailableFreeSpace
+    $space = Get-DestinationSpace $Paths.SnapshotsRoot
+    $available = $space.AvailableBytes
+    Write-Info ("Backup destination: {0}" -f $Paths.SnapshotsRoot)
+    Write-Info ("Space checked at {0}: {1:N1} GiB available to this account; {2:N1} GiB total free." -f $space.CheckedPath, ($available/1GB), ($space.TotalFreeBytes/1GB))
     $actionName = if ($Refresh) { 'Refresh' } else { 'Setup' }
     # Bind the reviewed list, selected baseline and file sizes to this installation.
     # This is a stale-review check, not an account/security authorization token.
@@ -625,7 +664,7 @@ function Invoke-ProtectedLaunch($Paths) {
     Write-Good "Local snapshot verified: $($snapshot.Manifest.Mods.Count) mods; repaired $($missing.Count) missing files."
     if ($DeferSteamLaunch) { Write-Info 'Local verification complete; returning launch approval to the window.' }
     else { Write-Info 'Requesting Steam launch. This does not prove successful game loading or online currency.' }
-    if (-not $DeferSteamLaunch) { Start-Process "steam://rungameid/$SteamAppId" -ErrorAction Stop }
+    if (-not $DeferSteamLaunch) { Start-Process "steam://launch/$SteamAppId/option1" -ErrorAction Stop }
     return [pscustomobject]@{
         Status = 'Verified'; SnapshotId = $snapshot.Id; ModCount = $snapshot.Manifest.Mods.Count
         FilesChecked = $snapshot.Manifest.Files.Count; FilesRestored = $missing.Count
@@ -694,7 +733,7 @@ function Invoke-QuickLaunch($Paths) {
         Write-Info 'Requesting Steam launch.'
         Write-StageProgress 'Requesting Steam launch'
     }
-    if (-not $DeferSteamLaunch) { Start-Process "steam://rungameid/$SteamAppId" -ErrorAction Stop }
+    if (-not $DeferSteamLaunch) { Start-Process "steam://launch/$SteamAppId/option1" -ErrorAction Stop }
     return [pscustomobject]@{
         Status = 'QuickChecked'; SnapshotId = $snapshot.Id; ModCount = $snapshot.Manifest.Mods.Count
         FilesChecked = $count; FilesRestored = 0; IntegrityVerified = $false
@@ -828,7 +867,13 @@ function Invoke-GuardAction($Paths, [string]$RequestedAction) {
     $lock = Enter-OperationLock $Paths
     try {
         Assert-ArkClosed
+        Repair-InterruptedRestores $Paths
+        Repair-InterruptedUpdates $Paths
         switch ($RequestedAction) {
+            'PlanRestore' { return Get-ModRestoreReview $Paths }
+            'RestoreMissing' { return Restore-MissingMods $Paths $BackupApproval }
+            'PlanUpdates' { return Get-ModUpdatePlan $Paths }
+            'InstallUpdates' { return Install-ModUpdates $Paths $TargetId $ManagementApproval }
             'RemoveSnapshot' { return Remove-ManagedSnapshot $Paths $TargetId $ManagementApproval }
             'SelectSnapshot' { return Select-ManagedSnapshot $Paths $TargetId $ManagementApproval }
             'CleanRepairStaging' { return Move-RepairLeftovers $Paths $ManagementApproval }
@@ -847,6 +892,8 @@ function Invoke-GuardAction($Paths, [string]$RequestedAction) {
 
 . (Join-Path $PSScriptRoot 'ModLocket-Backups.ps1')
 . (Join-Path $PSScriptRoot 'ModLocket-Catalog.ps1')
+. (Join-Path $PSScriptRoot 'ModLocket-Updater.ps1')
+. (Join-Path $PSScriptRoot 'ModLocket-Restore.ps1')
 
 if ($LibraryOnly) { return }
 try {

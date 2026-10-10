@@ -1,19 +1,36 @@
-. (Join-Path $ScriptRoot 'ModLocket-CurseForge.ps1')
+﻿. (Join-Path $ScriptRoot 'ModLocket-CurseForge.ps1')
 function Show-UpdateConnection {
+    param([switch]$ManageKey)
+    $hasSavedKey = $false
+    $keyReadFailed = $false
+    $savedKey = $null
+    try {
+        $savedKey = Get-CurseForgeKey
+        $hasSavedKey = -not [string]::IsNullOrWhiteSpace($savedKey)
+    } catch {
+        $keyReadFailed = $true
+    } finally { $savedKey = $null }
+    if ($hasSavedKey -and -not $ManageKey) { return $true }
     $dialog=New-Object Windows.Forms.Form
-    $dialog.Text='Check for updates';$dialog.ClientSize=New-Object Drawing.Size 620,315
+    $dialog.Text=$(if($ManageKey){'CurseForge API settings'}else{'Connect to CurseForge'});$dialog.ClientSize=New-Object Drawing.Size 620,315
     $dialog.StartPosition='CenterParent';$dialog.FormBorderStyle='FixedDialog';$dialog.MaximizeBox=$false;$dialog.MinimizeBox=$false
     $intro=New-Object Windows.Forms.Label
     $intro.Location=New-Object Drawing.Point 22,20;$intro.Size=New-Object Drawing.Size 576,85
-    $intro.Text="Compare your installed mod IDs with saved lists and full backups while ARK is closed.`r`n`r`nLive CurseForge checks require an approved API key. Without one, you can still compare local records and save a small mod list."
+    $intro.Text="Compare your installed mod IDs with saved lists and full backups while ARK is closed.`r`n`r`nEnter your CurseForge API key once. ModLocket remembers it for future checks, including after a restart."
+    if ($hasSavedKey) {
+        $intro.Text="Your CurseForge API key is saved and available for update checks.`r`n`r`nThe field below is blank for privacy. Enter a replacement only if you want to change your key."
+    } elseif ($keyReadFailed) {
+        $intro.Text="A saved CurseForge API key was found, but this Windows account could not open it.`r`n`r`nEnter the key again to replace the unreadable saved copy."
+    }
     $label=New-Object Windows.Forms.Label
     $label.Location=New-Object Drawing.Point 22,115;$label.Size=New-Object Drawing.Size 576,28
     $label.Text='CurseForge API key (optional; leave blank to keep an existing key)'
+    if ($hasSavedKey) { $label.Text='Replacement API key (leave blank to keep your saved key)' }
     $key=New-Object Windows.Forms.TextBox
     $key.Location=New-Object Drawing.Point 22,145;$key.Size=New-Object Drawing.Size 576,28;$key.UseSystemPasswordChar=$true
     $note=New-Object Windows.Forms.Label
     $note.Location=New-Object Drawing.Point 22,187;$note.Size=New-Object Drawing.Size 576,48
-    $note.Text='A key entered here is encrypted for your Windows account. A saved key is not proof of approved API access. This check sends mod IDs to CurseForge.'
+    $note.Text='Your key is encrypted for your Windows account. Use API settings to replace it. Update checks send mod IDs to CurseForge.'
     $link=New-Object Windows.Forms.LinkLabel
     $link.Location=New-Object Drawing.Point 22,267;$link.Size=New-Object Drawing.Size 190,25;$link.Text='CurseForge API access information'
     $link.LinkColor=$Colors.Ice;$link.ActiveLinkColor=$Colors.Purple
@@ -21,7 +38,7 @@ function Show-UpdateConnection {
     $cancel=New-Object Windows.Forms.Button
     $cancel.Text='Cancel';$cancel.Location=New-Object Drawing.Point 328,265;$cancel.Size=New-Object Drawing.Size 125,32;$cancel.DialogResult='Cancel'
     $check=New-Object Windows.Forms.Button
-    $check.Text='Check now';$check.Location=New-Object Drawing.Point 469,265;$check.Size=New-Object Drawing.Size 129,32;$check.DialogResult='OK'
+    $check.Text=$(if($ManageKey){'Save'}else{'Save and check'});$check.Location=New-Object Drawing.Point 469,265;$check.Size=New-Object Drawing.Size 129,32;$check.DialogResult='OK'
     $dialog.Controls.AddRange(@($intro,$label,$key,$note,$link,$cancel,$check));$dialog.AcceptButton=$check;$dialog.CancelButton=$cancel
     Set-DialogTheme $dialog
     try {

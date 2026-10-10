@@ -1,24 +1,31 @@
 ﻿. (Join-Path $ScriptRoot 'ModLocket-CurseForge.ps1')
 function Show-UpdateConnection {
     param([switch]$ManageKey)
-    if (-not $ManageKey) {
-        $savedKey = $null
-        try {
-            $savedKey = Get-CurseForgeKey
-            if (-not [string]::IsNullOrWhiteSpace($savedKey)) { return $true }
-        } catch {
-            # An unreadable saved key can be replaced in the dialog below.
-        } finally { $savedKey = $null }
-    }
+    $hasSavedKey = $false
+    $keyReadFailed = $false
+    $savedKey = $null
+    try {
+        $savedKey = Get-CurseForgeKey
+        $hasSavedKey = -not [string]::IsNullOrWhiteSpace($savedKey)
+    } catch {
+        $keyReadFailed = $true
+    } finally { $savedKey = $null }
+    if ($hasSavedKey -and -not $ManageKey) { return $true }
     $dialog=New-Object Windows.Forms.Form
     $dialog.Text=$(if($ManageKey){'CurseForge API settings'}else{'Connect to CurseForge'});$dialog.ClientSize=New-Object Drawing.Size 620,315
     $dialog.StartPosition='CenterParent';$dialog.FormBorderStyle='FixedDialog';$dialog.MaximizeBox=$false;$dialog.MinimizeBox=$false
     $intro=New-Object Windows.Forms.Label
     $intro.Location=New-Object Drawing.Point 22,20;$intro.Size=New-Object Drawing.Size 576,85
     $intro.Text="Compare your installed mod IDs with saved lists and full backups while ARK is closed.`r`n`r`nEnter your CurseForge API key once. ModLocket remembers it for future checks, including after a restart."
+    if ($hasSavedKey) {
+        $intro.Text="Your CurseForge API key is saved and available for update checks.`r`n`r`nThe field below is blank for privacy. Enter a replacement only if you want to change your key."
+    } elseif ($keyReadFailed) {
+        $intro.Text="A saved CurseForge API key was found, but this Windows account could not open it.`r`n`r`nEnter the key again to replace the unreadable saved copy."
+    }
     $label=New-Object Windows.Forms.Label
     $label.Location=New-Object Drawing.Point 22,115;$label.Size=New-Object Drawing.Size 576,28
     $label.Text='CurseForge API key (optional; leave blank to keep an existing key)'
+    if ($hasSavedKey) { $label.Text='Replacement API key (leave blank to keep your saved key)' }
     $key=New-Object Windows.Forms.TextBox
     $key.Location=New-Object Drawing.Point 22,145;$key.Size=New-Object Drawing.Size 576,28;$key.UseSystemPasswordChar=$true
     $note=New-Object Windows.Forms.Label

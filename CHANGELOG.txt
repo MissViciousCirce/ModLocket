@@ -1,3 +1,35 @@
+4.0.0-personal.9-nobe - 2026-10-10
+- Request Steam's No BattlEye option from protected launch and Launch anyway.
+- Keep launch cancellation, stale approval and active-operation safeguards.
+- Fix current premium mods incorrectly appearing blocked before version comparison.
+- Recognize newer installed versions without reporting a download-access error;
+  refresh stale project summaries against the Windows file list.
+- Allow authorized freemium updates while retaining premium ownership checks.
+- Fix UTC/local-time comparisons that immediately expired fresh update plans.
+- Explain per-file HTTP access failures without assuming the API key is invalid.
+- Show saved-key status in API settings and full update reasons on hover.
+- Verify a live AutoDoors Windows download and checksums; no live mod installation.
+- See VALIDATION.md for automated checks and remaining validation limits.
+
+BUILD 09
+- Restore full missing mods from the selected backup, including absent records.
+- Preview restore actions and preserve newer or conflicting installed versions.
+- Preserve existing enabled settings, OutOfDate status and unrelated records.
+- Add interrupted-recovery journal, verified copying and atomic record insertion.
+- Add Launch anyway on the main screen and update results; bypasses ModLocket
+  checks without altering mod files, settings or installation records.
+- Separate recovery completion from launching ARK.
+- Align app/core/build version labels with personal.9.
+- 24 recovery/launch checks, 19 updater checks and 199 regression checks pass
+  on Linux/PowerShell 7.4.13. Windows UI and real ARK loading unverified.
+
+BUILD 08
+- Compare Windows release IDs before evaluating distribution restrictions.
+- Current restricted mods no longer appear blocked merely by that flag.
+- Confirm official download URL access before offering installation.
+- Replace the disabled empty-plan button with an active Check again action.
+- Preserve all archive, identity, backup and recovery checks.
+
 4.0.0-online.4 - Local and optional CurseForge comparison (private preview)
 - Replace historical-scan button action with saved/local/published ID comparison.
 - Optional fixed-endpoint CurseForge API transport with encrypted Windows key.

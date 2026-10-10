@@ -1,4 +1,4 @@
-# Loaded by Safety.Tests.ps1. Every path is a synthetic fixture under its testRoot.
+﻿# Loaded by Safety.Tests.ps1. Every path is a synthetic fixture under its testRoot.
 Add-Type -Path (Join-Path $release 'ModLocket-Worker.cs')
 if ($env:OS -ne 'Windows_NT') {
     Write-Output 'SKIP | 12 Windows process-containment/interruption tests (requires Windows kernel).'

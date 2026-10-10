@@ -1,4 +1,4 @@
-# Loaded by ModLocket-Core.ps1. Management never modifies ARK's library index.
+﻿# Loaded by ModLocket-Core.ps1. Management never modifies ARK's library index.
 function Get-BackupPointerState($Paths) {
     Assert-NoLinks $Paths.Pointer
     if (-not (Test-Path -LiteralPath $Paths.Pointer)) {

@@ -1,4 +1,4 @@
-# Synthetic comparison and list-only storage checks. No real API key or HTTP.
+﻿# Synthetic comparison and list-only storage checks. No real API key or HTTP.
 $originalKey=${function:Get-CurseForgeKey}
 $originalBatch=${function:Invoke-CurseForgeBatch}
 function Get-CurseForgeKey { return '' }

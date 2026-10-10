@@ -2,7 +2,7 @@
 param(
     [string]$SourceDirectory = $PSScriptRoot,
     [string]$OutputDirectory,
-    [ValidatePattern('^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$')][string]$FileVersion = '4.0.0.7',
+    [ValidatePattern('^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$')][string]$FileVersion = '4.0.0.9',
     [switch]$PrepareOnly
 )
 $ErrorActionPreference='Stop'
@@ -11,7 +11,7 @@ if(-not $OutputDirectory){$OutputDirectory=Join-Path $source 'dist'}
 $output=[IO.Path]::GetFullPath($OutputDirectory)
 # Explicit app-only allowlist. No recursive packaging of user folders, keys or backups.
 $required=@('ModLocket.ps1','ModLocket-Core.ps1','ModLocket-Backups.ps1',
-    'ModLocket-Updater.ps1','ModLocket-JsonPatch.cs','ModLocket-Update-UI.ps1',
+    'ModLocket-Updater.ps1','ModLocket-Restore.ps1','ModLocket-Restore-UI.ps1','ModLocket-JsonPatch.cs','ModLocket-Update-UI.ps1',
     'ModLocket-Theme.ps1','ModLocket-Worker.cs','ModLocket-Worker-Entry.ps1',
     'ViciousCirceLogo.png','ModLocket.ico','Footer-Snake.png','Moonlit-Header.png')
 $optional=@('ModLocket-Catalog.ps1','ModLocket-CurseForge.ps1','ModLocket-Comparison-UI.ps1',

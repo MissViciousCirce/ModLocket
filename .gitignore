@@ -1,0 +1,10 @@
+# Local credentials and generated artifacts
+curseforge-key.txt
+app-settings.json
+.env
+.env.*
+dist/
+output/
+tmp/
+*-Test-Results.txt
+Interface-Check.txt
